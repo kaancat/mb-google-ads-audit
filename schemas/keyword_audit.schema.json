@@ -1,0 +1,227 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Keyword Audit Schema",
+  "description": "Schema for Phase 4 keyword and search term audit output",
+  "type": "object",
+  "required": ["audit_period", "summary", "quality_score_analysis", "search_term_analysis", "negative_keyword_analysis"],
+  "properties": {
+    "audit_period": {
+      "type": "object",
+      "required": ["start_date", "end_date", "days"],
+      "properties": {
+        "start_date": { "type": "string", "format": "date" },
+        "end_date": { "type": "string", "format": "date" },
+        "days": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["total_keywords", "total_search_terms", "total_wasted_spend_dkk", "qs_weighted_avg", "negative_positive_ratio"],
+      "properties": {
+        "total_keywords": { "type": "integer", "minimum": 0 },
+        "total_search_terms": { "type": "integer", "minimum": 0 },
+        "total_wasted_spend_dkk": {
+          "type": "number",
+          "minimum": 0,
+          "description": "$TOTAL_WASTED_SPEND - spend on irrelevant/non-converting terms"
+        },
+        "qs_weighted_avg": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "$QS_WEIGHTED_AVG - spend-weighted Quality Score average"
+        },
+        "negative_positive_ratio": {
+          "type": "number",
+          "minimum": 0,
+          "description": "$NEGATIVE_POSITIVE_RATIO - negatives : positives"
+        },
+        "total_negatives": { "type": "integer", "minimum": 0 },
+        "total_positives": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "quality_score_analysis": {
+      "type": "object",
+      "required": ["distribution", "low_qs_keywords"],
+      "properties": {
+        "distribution": {
+          "type": "object",
+          "description": "Spend distribution by QS band",
+          "properties": {
+            "qs_1": { "$ref": "#/definitions/qs_band" },
+            "qs_2_3": { "$ref": "#/definitions/qs_band" },
+            "qs_4_6": { "$ref": "#/definitions/qs_band" },
+            "qs_7_8": { "$ref": "#/definitions/qs_band" },
+            "qs_9_10": { "$ref": "#/definitions/qs_band" },
+            "qs_null": { "$ref": "#/definitions/qs_band" }
+          }
+        },
+        "low_qs_keywords": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["keyword", "quality_score", "spend"],
+            "properties": {
+              "keyword": { "type": "string" },
+              "quality_score": { "type": "integer", "minimum": 1, "maximum": 10 },
+              "expected_ctr": { "type": "string", "enum": ["Above average", "Average", "Below average"] },
+              "ad_relevance": { "type": "string", "enum": ["Above average", "Average", "Below average"] },
+              "landing_page_exp": { "type": "string", "enum": ["Above average", "Average", "Below average"] },
+              "spend": { "type": "number", "minimum": 0 },
+              "clicks": { "type": "integer", "minimum": 0 },
+              "conversions": { "type": "number", "minimum": 0 },
+              "campaign": { "type": "string" },
+              "ad_group": { "type": "string" }
+            }
+          },
+          "description": "Keywords with QS 1-6 consuming significant budget"
+        }
+      }
+    },
+    "search_term_analysis": {
+      "type": "object",
+      "required": ["wasted_spend_terms", "top_converting_terms"],
+      "properties": {
+        "wasted_spend_terms": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["search_term", "spend", "clicks", "conversions"],
+            "properties": {
+              "search_term": { "type": "string" },
+              "spend": { "type": "number", "minimum": 0 },
+              "clicks": { "type": "integer", "minimum": 0 },
+              "conversions": { "type": "number", "minimum": 0 },
+              "cpa": { "type": "number" },
+              "relevance": {
+                "type": "string",
+                "enum": ["irrelevant", "low_intent", "competitor", "off_topic"],
+                "description": "Why this term is wasted spend"
+              },
+              "recommendation": {
+                "type": "string",
+                "enum": ["add_negative_exact", "add_negative_phrase", "monitor", "investigate"]
+              },
+              "campaign": { "type": "string" }
+            }
+          },
+          "description": "Search terms with high spend and low/no conversions"
+        },
+        "top_converting_terms": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["search_term", "conversions", "cpa"],
+            "properties": {
+              "search_term": { "type": "string" },
+              "spend": { "type": "number", "minimum": 0 },
+              "clicks": { "type": "integer", "minimum": 0 },
+              "conversions": { "type": "number", "minimum": 0 },
+              "cpa": { "type": "number" },
+              "campaign": { "type": "string" }
+            }
+          },
+          "description": "Best performing search terms"
+        },
+        "ngram_analysis": {
+          "type": "object",
+          "properties": {
+            "top_wasting_patterns": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "pattern": { "type": "string" },
+                  "occurrences": { "type": "integer" },
+                  "total_spend": { "type": "number" },
+                  "total_conversions": { "type": "number" }
+                }
+              },
+              "description": "$TOP_WASTING_TERMS - n-gram patterns with poor performance"
+            },
+            "top_converting_patterns": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "pattern": { "type": "string" },
+                  "occurrences": { "type": "integer" },
+                  "total_spend": { "type": "number" },
+                  "total_conversions": { "type": "number" }
+                }
+              },
+              "description": "$TOP_CONVERTING_TERMS - n-gram patterns with good performance"
+            }
+          }
+        }
+      }
+    },
+    "negative_keyword_analysis": {
+      "type": "object",
+      "required": ["current_negatives", "recommended_negatives"],
+      "properties": {
+        "current_negatives": {
+          "type": "object",
+          "properties": {
+            "account_level": { "type": "integer", "minimum": 0 },
+            "campaign_level": { "type": "integer", "minimum": 0 },
+            "total": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "ratio_assessment": {
+          "type": "string",
+          "enum": ["severely_under_protected", "under_protected", "moderate", "good"],
+          "description": "Based on negative:positive ratio"
+        },
+        "recommended_negatives": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["keyword", "match_type", "scope"],
+            "properties": {
+              "keyword": { "type": "string" },
+              "match_type": { "type": "string", "enum": ["exact", "phrase", "broad"] },
+              "scope": { "type": "string", "enum": ["account", "campaign"] },
+              "campaign": { "type": "string", "description": "If scope is campaign" },
+              "reason": { "type": "string" },
+              "potential_savings_dkk": { "type": "number" }
+            }
+          },
+          "description": "Recommended negative keywords to add"
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/finding" },
+      "description": "Keyword-related findings from this phase"
+    }
+  },
+  "definitions": {
+    "qs_band": {
+      "type": "object",
+      "properties": {
+        "keyword_count": { "type": "integer", "minimum": 0 },
+        "spend": { "type": "number", "minimum": 0 },
+        "spend_pct": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "required": ["id", "title", "severity", "category"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^F[0-9]{3}$" },
+        "title": { "type": "string" },
+        "severity": { "type": "string", "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"] },
+        "category": {
+          "type": "string",
+          "enum": ["KEYWORD_QS", "KEYWORD_SEARCH_TERMS", "KEYWORD_NEGATIVES"]
+        },
+        "description": { "type": "string" },
+        "impact_dkk": { "type": "number" },
+        "evidence": { "type": "string" },
+        "recommendation": { "type": "string" }
+      }
+    }
+  }
+}

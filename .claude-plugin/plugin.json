@@ -1,0 +1,23 @@
+{
+  "name": "mb-google-ads-audit",
+  "version": "1.0.0",
+  "description": "Comprehensive Google Ads account audit system - diagnostic analysis, severity scoring, and prioritized action plans",
+  "author": {
+    "name": "Monday Brew",
+    "email": "hello@mondaybrew.dk",
+    "url": "https://mondaybrew.dk"
+  },
+  "homepage": "https://mondaybrew.dk",
+  "repository": "https://github.com/kaancat/mb-google-ads-audit",
+  "license": "MIT",
+  "keywords": [
+    "google-ads",
+    "audit",
+    "ppc",
+    "sem",
+    "advertising",
+    "diagnostics"
+  ],
+  "commands": "./commands",
+  "hooks": "./hooks/hooks.json"
+}

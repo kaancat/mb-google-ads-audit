@@ -1,0 +1,312 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Recommendations Schema",
+  "description": "Schema for Phase 6 synthesis and recommendations output - the master findings document",
+  "type": "object",
+  "required": ["metadata", "summary", "findings", "action_plan"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["audit_date", "customer_id", "audit_period_days"],
+      "properties": {
+        "audit_date": { "type": "string", "format": "date" },
+        "customer_id": { "type": "string" },
+        "customer_name": { "type": "string" },
+        "audit_period_days": { "type": "integer", "minimum": 1 },
+        "business_type": {
+          "type": "string",
+          "enum": ["e-commerce", "lead-gen", "local-service", "B2B", "SaaS"],
+          "description": "From $BUSINESS_TYPE variable"
+        },
+        "target_cpa": {
+          "type": "number",
+          "description": "From $TARGET_CPA variable (DKK)"
+        },
+        "target_roas": {
+          "type": "number",
+          "description": "From $TARGET_ROAS variable (%)"
+        },
+        "primary_goal": {
+          "type": "string",
+          "enum": ["leads", "sales", "brand-awareness"],
+          "description": "From $PRIMARY_GOAL variable"
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["total_wasted_spend_dkk", "critical_count", "high_count", "medium_count", "low_count"],
+      "properties": {
+        "total_wasted_spend_dkk": {
+          "type": "number",
+          "minimum": 0,
+          "description": "From $TOTAL_WASTED_SPEND - cumulative DKK wasted in audit period"
+        },
+        "critical_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "From $CRITICAL_COUNT"
+        },
+        "high_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "From $HIGH_COUNT"
+        },
+        "medium_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "From $MEDIUM_COUNT"
+        },
+        "low_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "From $LOW_COUNT"
+        },
+        "quick_wins_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "From $QUICK_WINS_COUNT"
+        },
+        "total_impact_dkk": {
+          "type": "number",
+          "description": "From $TOTAL_IMPACT_DKK - total estimated monthly impact"
+        },
+        "overall_health": {
+          "type": "string",
+          "enum": ["critical", "needs_attention", "good", "excellent"],
+          "description": "Overall account health assessment"
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "severity", "category", "description", "recommendation", "priority"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^F[0-9]{3}$",
+            "description": "Finding ID in format F001, F002, etc."
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "Clear, action-oriented title"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"],
+            "description": "CRITICAL: Blocking/50%+ waste. HIGH: 20%+ impact. MEDIUM: Opportunity. LOW: Nice to have."
+          },
+          "severity_rationale": {
+            "type": "string",
+            "description": "Why this severity level was assigned"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "TRACKING_CONVERSION", "TRACKING_ATTRIBUTION", "TRACKING_ENHANCED", "TRACKING_DATA_QUALITY",
+              "STRUCTURE_CAMPAIGN", "STRUCTURE_ADGROUP", "STRUCTURE_NETWORK", "STRUCTURE_GEO",
+              "PERFORMANCE_BUDGET", "PERFORMANCE_BID_STRATEGY", "PERFORMANCE_COMPETITION",
+              "KEYWORD_QS", "KEYWORD_SEARCH_TERMS", "KEYWORD_NEGATIVES",
+              "ADS_RSA", "ADS_EXTENSIONS", "ADS_LANDING_PAGE"
+            ],
+            "description": "MUST be from canonical finding categories"
+          },
+          "phase": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Which audit phase identified this finding"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description of the issue with supporting data"
+          },
+          "impact_dkk": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Estimated monthly DKK impact. REQUIRED for CRITICAL/HIGH findings."
+          },
+          "evidence": {
+            "type": "string",
+            "description": "Specific data supporting this finding"
+          },
+          "recommendation": {
+            "type": "string",
+            "description": "Specific, actionable recommendation"
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["P0", "P1", "P2"],
+            "description": "P0: Week 1. P1: Month 1. P2: Months 2-3."
+          },
+          "is_quick_win": {
+            "type": "boolean",
+            "description": "True if: <2hr implementation, no dependencies, measurable impact within 7 days"
+          },
+          "implementation_time": {
+            "type": "string",
+            "enum": ["< 1 hour", "1-2 hours", "2-4 hours", "4-8 hours", "1+ days"],
+            "description": "Estimated time to implement fix"
+          },
+          "requires_client_action": {
+            "type": "boolean",
+            "description": "Does the client need to take action (vs agency can fix)"
+          }
+        }
+      }
+    },
+    "action_plan": {
+      "type": "object",
+      "required": ["P0", "P1", "P2"],
+      "properties": {
+        "P0": {
+          "type": "object",
+          "required": ["timeframe", "focus", "items"],
+          "properties": {
+            "timeframe": {
+              "type": "string",
+              "const": "Week 1"
+            },
+            "focus": {
+              "type": "string",
+              "description": "Focus area description"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["finding_id", "action", "owner"],
+                "properties": {
+                  "finding_id": { "type": "string", "pattern": "^F[0-9]{3}$" },
+                  "action": { "type": "string" },
+                  "owner": { "type": "string", "enum": ["client", "agency", "both"] },
+                  "impact_dkk": { "type": "number" }
+                }
+              },
+              "description": "Week 1 actions - CRITICAL findings only"
+            }
+          }
+        },
+        "P1": {
+          "type": "object",
+          "required": ["timeframe", "focus", "items"],
+          "properties": {
+            "timeframe": {
+              "type": "string",
+              "const": "Month 1"
+            },
+            "focus": {
+              "type": "string",
+              "description": "Focus area description"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["finding_id", "action", "owner"],
+                "properties": {
+                  "finding_id": { "type": "string", "pattern": "^F[0-9]{3}$" },
+                  "action": { "type": "string" },
+                  "owner": { "type": "string", "enum": ["client", "agency", "both"] },
+                  "impact_dkk": { "type": "number" }
+                }
+              },
+              "description": "Month 1 actions - HIGH findings + Quick Wins"
+            }
+          }
+        },
+        "P2": {
+          "type": "object",
+          "required": ["timeframe", "focus", "items"],
+          "properties": {
+            "timeframe": {
+              "type": "string",
+              "const": "Months 2-3"
+            },
+            "focus": {
+              "type": "string",
+              "description": "Focus area description"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["finding_id", "action", "owner"],
+                "properties": {
+                  "finding_id": { "type": "string", "pattern": "^F[0-9]{3}$" },
+                  "action": { "type": "string" },
+                  "owner": { "type": "string", "enum": ["client", "agency", "both"] },
+                  "impact_dkk": { "type": "number" }
+                }
+              },
+              "description": "Months 2-3 actions - MEDIUM/LOW findings + Strategic"
+            }
+          }
+        }
+      }
+    },
+    "quick_wins": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["finding_id", "title", "action", "expected_impact"],
+        "properties": {
+          "finding_id": { "type": "string", "pattern": "^F[0-9]{3}$" },
+          "title": { "type": "string" },
+          "action": { "type": "string" },
+          "expected_impact": { "type": "string" },
+          "implementation_time": { "type": "string" }
+        }
+      },
+      "description": "Filtered list of quick win opportunities"
+    },
+    "excluded_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title", "reason"],
+        "properties": {
+          "title": { "type": "string" },
+          "reason": {
+            "type": "string",
+            "description": "Why it was excluded - reference to $WORKING_WELL item"
+          },
+          "working_well_reference": {
+            "type": "string",
+            "description": "The specific item from $WORKING_WELL that caused exclusion"
+          }
+        }
+      },
+      "description": "Findings identified but excluded because they match $WORKING_WELL"
+    },
+    "appendices": {
+      "type": "object",
+      "properties": {
+        "negative_keywords": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Full list of recommended negative keywords"
+        },
+        "keyword_additions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Recommended keywords to add"
+        },
+        "search_terms_to_exclude": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "term": { "type": "string" },
+              "spend": { "type": "number" },
+              "reason": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
