@@ -1,406 +1,581 @@
 # mb-google-ads-audit
 
-Google Ads account audit plugin for Claude Code. Comprehensive diagnostic analysis with actionable recommendations.
+A comprehensive Google Ads account audit plugin for [Claude Code](https://claude.ai/code). Performs diagnostic analysis with severity-ranked findings and prioritized action plans.
 
-## Status: Implementation Complete - Ready for Testing
-
-Deep research phase completed. Architecture designed and documented. All components implemented including phase prompts, hooks, schemas, and command entry point.
-
-### Implementation Progress
-- [x] SKILL.md main skill definition
-- [x] hooks.json with phase gate validation
-- [x] validate-phase-gate.py (PreToolUse hook)
-- [x] validate-completion.py (Stop hook)
-- [x] JSON schemas for all output artifacts
-- [x] All 8 phase prompt files (phases 0-7)
-- [x] Presentation template (audit_presentation.html)
-- [x] Plugin manifest (.claude-plugin/plugin.json)
-- [x] Command entry point (commands/google-ads-audit.md)
-- [x] Automated test suite (scripts/test_plugin.py - 55 tests passing)
-
-### Research Documents (in `/research/`)
-
-| Document | Description |
-|----------|-------------|
-| **PPC_SPECIALIST_AUDIT_FRAMEWORK.md** | Comprehensive synthesis of how PPC specialists approach audits - mindset, methodology, decision frameworks |
-| **AUDIT_CHECKLIST.md** | Practical checklist for conducting audits, organized by phase |
-| **PLUGIN_ARCHITECTURE.md** | Detailed plugin architecture with phase workflows, decision trees, schemas |
+**Repository:** https://github.com/kaancat/mb-google-ads-audit
+**Marketplace:** https://github.com/kaancat/mb-marketplace
+**Version:** 1.0.0
 
 ---
 
-## Vision
+## Table of Contents
 
-A comprehensive Google Ads audit system that produces diagnostic reports with severity-ranked findings and prioritized action plans. Similar workflow to `mb-keyword-analysis` but focused on analyzing existing accounts rather than building new campaigns.
-
-**Primary Deliverable:** Diagnostic report + action plan, beautifully presented (like `presentation.html` in keyword plugin).
-
-**Key Constraint:** Typically only Google Ads access available (not GA4), so the audit must work with Ads data alone.
-
----
-
-## Research Summary
-
-### Sources Consulted
-
-1. **Web Research:**
-   - [Promodo Google Ads Audit Checklist 2025](https://www.promodo.com/blog/google-ads-audit-checklist)
-   - [North Country 7-Figure Account Audit Checklist](https://www.northcountrygrowth.com/blog/steal-our-2025-google-ads-audit-checklist-used-by-7-figure-accounts)
-   - [Adalysis PPC Audit Guide](https://adalysis.com/how-to-audit-a-google-ads-account-the-ultimate-ppc-audit-checklist-2021/)
-   - [Search Engine Land: Agency-Grade PPC Audits](https://searchengineland.com/agency-grade-ppc-audits-reports-growth-roadmaps-460929)
-
-2. **RAG Knowledge Base (Section 15: The Google Ads Audit Playbook):**
-   - 15.1 Different Types of Audits
-   - 15.2 Guide to our Google Ads Audit Process
-   - 15.3 A Quick Wins Cheat Sheet
-   - 15.4 Key Takeaways
-   - 15.5 Free Audit
-
-3. **Existing Audit Examples:**
-   - `/clients/nmd_law/documentation/nmd_audit_6month_20251201.md` - 524-line comprehensive audit
-   - `/output/karim_design_audit.md`
-   - `backend/scripts/audit_account.py` - 350+ lines of audit data fetching
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [How It Works](#how-it-works)
+- [The 8-Phase Workflow](#the-8-phase-workflow)
+- [Plugin Architecture](#plugin-architecture)
+- [File Structure](#file-structure)
+- [How Claude Code Plugins Work](#how-claude-code-plugins-work)
+- [Audit Methodology (from RAG)](#audit-methodology-from-rag)
+- [Configuration](#configuration)
+- [Development](#development)
+- [Related Projects](#related-projects)
 
 ---
 
-## Three Types of Audits (from Knowledge Base)
+## Installation
 
-| Type | Focus | Examples |
-|------|-------|----------|
-| **Quick Wins** | Egregious errors, immediate fixes | No conversion tracking, only 2/15 headlines, search terms eating budget |
-| **Strategic** | Business goals alignment, testing framework | SWOT, campaign structure matches goals, scaling potential |
-| **Optimization** | Day-to-day blueprint | Negative keywords, budget adjustments, sitelink performance |
-
-**Best audits combine all three.**
-
----
-
-## The 12-Step Audit Process (from Course)
-
-1. **Website first** - understand the business (spend ~1 hour)
-2. Competitors & Google searches
-3. Conversion tracking - is it set up?
-4. Search term report - wasted spend analysis
-5. Ads - RSA quality, extensions
-6. Sitelinks, callouts, structured snippets
-7. Bid strategies & targets vs actuals
-8. Quality Score analysis
-9. Budget adjustments - which campaigns limited by budget?
-10. Landing page URLs - are they correct?
-11. N-gram analysis
-12. Best practice checklist
-
-**Three Tentpoles:** Business understanding, Conversion tracking, Search term report
-
----
-
-## Quick Wins Checklist (from Course)
-
-- [ ] Conversion tracking accuracy
-- [ ] Attribution settings (last-click = problem)
-- [ ] Enhanced conversion tracking enabled?
-- [ ] Campaign consolidation (too fragmented?)
-- [ ] Negative keywords (haven't added any in a year?)
-- [ ] Ad copy (typos, missing headlines/descriptions)
-- [ ] Only 1-2 headlines in RSAs (need 10-15)
-- [ ] Only 1 out of 4 descriptions
-- [ ] Incorrect audiences/placements
-- [ ] Bad budget/bid settings
-- [ ] Landing page URLs incorrect
-- [ ] Filter: assets with $300+ clicks, <3 conversions
-
----
-
-## Audit Components (Comprehensive List)
-
-### Foundation Layer (Data Gathering)
-1. Account structure analysis (campaigns, ad groups, hierarchy)
-2. Conversion tracking setup (actions, attribution, time lag)
-3. Campaign performance metrics
-4. Keyword performance & Quality Score
-5. Search terms & wasted spend
-6. Ad copy & RSA strength
-7. Asset analysis (sitelinks, callouts, structured snippets, etc.)
-8. Landing page alignment
-9. Device/geographic/demographic splits
-10. Impression share & competition (Auction Insights)
-11. Budget allocation & bidding strategy
-12. Change history review
-
-### Analysis Layer (Diagnosis)
-- Severity matrix (Critical / High / Medium / Low)
-- Wasted spend quantification
-- Root cause identification
-- Benchmark comparison (targets vs actuals)
-
-### Output Layer (Deliverable)
-- Executive summary with key findings
-- Section-by-section analysis
-- Prioritized action plan (P0 immediate → P2 medium-term)
-- Quick wins checklist
-- Technical appendices
-
----
-
-## Discovery Questions (Draft - 11 Questions)
-
-| # | Question | Why It Matters |
-|---|----------|----------------|
-| 1 | What are your primary business goals? (Leads, Sales, Brand) | Frames entire analysis |
-| 2 | Which campaigns/services are most important to you? | Prioritizes analysis depth |
-| 3 | What's working well right now? | Don't "fix" what's intentional |
-| 4 | What concerns do you have about the account? | Direct issues to investigate |
-| 5 | How are conversions tracked? (Forms, calls, purchases, offline?) | Understanding what data represents |
-| 6 | What significant changes were made in the last 6 months? | Context for performance shifts |
-| 7 | Are there seasonal patterns in your business? | Prevents misdiagnosing normal fluctuations |
-| 8 | Brand vs non-brand strategy - any intentional approach? | Don't flag brand as "too expensive" |
-| 9 | What's your profit margin or customer lifetime value? | Contextualizes CPA recommendations |
-| 10 | Any competitors you're specifically watching? | Auction insights context |
-| 11 | What would a successful audit outcome look like for you? | Shapes deliverable focus |
-
-**Note:** Target CPA/ROAS can be inferred from account data (conversion goals, historical performance).
-
-Plus **website scraping** to understand services, landing pages, and conversion paths.
-
----
-
-## Architecture (Decided: 8-Phase Sequential Workflow)
-
-Based on deep research into PPC specialist methodology, we've selected a sequential phase approach with a mandatory discovery gate. See `/research/PLUGIN_ARCHITECTURE.md` for full details.
-
-```
-Phase 0: DISCOVERY (GATE - cannot proceed without)
-         ├── Website Analysis
-         └── Discovery Interview (11 questions)
-         Output: discovery_brief.md
-
-Phase 1: CONVERSION & TRACKING AUDIT
-         ├── Conversion Actions Review
-         ├── Attribution Model Assessment
-         └── Time Lag Analysis
-         Output: tracking_audit.md
-
-Phase 2: ACCOUNT STRUCTURE ANALYSIS
-         ├── Campaign Hierarchy
-         ├── Ad Group Organization
-         └── Network/Geo Settings
-         Output: structure_analysis.md
-
-Phase 3: CAMPAIGN PERFORMANCE ANALYSIS
-         ├── Metrics (30/90/180 day windows)
-         ├── Budget Utilization
-         ├── Bid Strategy Effectiveness
-         └── Auction Insights
-         Output: performance_analysis.json
-
-Phase 4: KEYWORD & SEARCH TERM ANALYSIS
-         ├── Quality Score Distribution
-         ├── Search Terms Wasted Spend
-         ├── Negative Keyword Gaps
-         └── N-Gram Analysis
-         Output: keyword_audit.json
-
-Phase 5: AD COPY & ASSET ANALYSIS
-         ├── RSA Strength/Coverage
-         ├── Extension Utilization
-         └── Landing Page Alignment
-         Output: ad_copy_audit.json
-
-Phase 6: SYNTHESIS & RECOMMENDATIONS
-         ├── Severity Matrix Generation
-         ├── Quick Wins Extraction
-         └── Action Plan (P0/P1/P2)
-         Output: recommendations.json
-
-Phase 7: PRESENTATION
-         └── Client-ready deliverable
-         Output: audit_presentation.html
-```
-
-**Core Principles:**
-- Discovery before diagnosis (context shapes interpretation)
-- Three tentpoles: Business understanding, Conversion tracking, Search terms
-- All findings require severity rating + DKK impact estimation
-- Don't "fix" intentional strategies - ask first
-
----
-
-## Technical Infrastructure
-
-### Backend Services (Included)
-
-The plugin includes backend services from the Monday Brew ecosystem:
-
-| File | Purpose | Size |
-|------|---------|------|
-| `backend/services/ads_connector.py` | Full Google Ads API wrapper | 114KB |
-| `backend/services/credentials.py` | Centralized credential loading | 1KB |
-| `backend/services/ga4_service.py` | GA4 integration (optional) | 22KB |
-| `scripts/audit_account.py` | Audit data fetching | 8KB |
-
-### Credential Requirements
-
-Configure in `~/.mondaybrew/.env`:
-```env
-GOOGLE_ADS_DEVELOPER_TOKEN=xxx
-GOOGLE_ADS_CLIENT_ID=xxx
-GOOGLE_ADS_CLIENT_SECRET=xxx
-GOOGLE_ADS_REFRESH_TOKEN=xxx
-GOOGLE_ADS_LOGIN_CUSTOMER_ID=xxx
-```
-
-### Data Flow
-
-```
-1. Run: python scripts/audit_account.py --customer-id [ID]
-2. Output: output/audit_[ID]_[DATE].json
-3. Phases 1-5 analyze the JSON data
-4. Phase 6 synthesizes findings
-5. Phase 7 generates presentation
-```
-
-### MCP RAG Available
-- `query_knowledge()` - Search audit methodology
-- `get_methodology("audit")` - Get audit-specific guidance
-- `get_example()` - Case study retrieval
-- `get_deliverable_schema()` - Output format specs
-
-### Existing Audit Output Format (from NMD Law example)
-- Executive Summary with severity matrix
-- Section-by-section analysis (10 sections)
-- Tables with metrics, assessments, and recommendations
-- Priority action plan (P0/P1/P2)
-- Technical appendices (negative keywords, keyword additions)
-
----
-
-## Next Steps
-
-### Completed (Research Phase)
-- [x] Deep research into PPC specialist audit methodology
-- [x] Synthesize findings into comprehensive framework
-- [x] Document audit checklist by phase
-- [x] Design 7-phase plugin architecture
-- [x] Define severity scoring system
-- [x] Create decision trees for findings interpretation
-- [x] Finalize discovery interview questions (11 questions)
-- [x] Design data extraction requirements
-
-### Completed (Strengthening Phase)
-- [x] Applied `mb-keyword-analysis` patterns to architecture:
-  - Variable storage pattern (`$VARIABLE_NAME`)
-  - Phase gating with explicit checkpoints ("STOP. Do not proceed.")
-  - Canonical finding categories (single source of truth)
-  - Schema with embedded guidelines and enums
-- [x] Created `skills/google-ads-audit/templates/discovery_brief.md`
-- [x] Created `skills/google-ads-audit/decision-trees/severity-scoring.md`
-- [x] Updated `AUDIT_CHECKLIST.md` with variable mappings and checkpoints
-- [x] Updated `PLUGIN_ARCHITECTURE.md` with comprehensive variable system
-
-### Completed (Presentation Phase)
-- [x] Created `skills/google-ads-audit/templates/audit_presentation.html`
-  - Monday Brew dark mode styling (extracted from website globals.css)
-  - Path-based SVG logo (font-independent)
-  - Severity color system (Critical/High/Medium/Low)
-  - Responsive design with print styles
-  - Handlebars-style placeholders for data injection
-  - Self-contained (deploy directly to Vercel)
-
-### Completed (Implementation Phase)
-- [x] Create `SKILL.md` main skill definition
-- [x] Create `phases/phase-0-discovery.md` prompt file
-- [x] Implement `hooks/hooks.json` with phase gate validation
-- [x] Create `hooks/validate-phase-gate.py` (PreToolUse hook)
-- [x] Create `hooks/validate-completion.py` (Stop hook)
-- [x] Create JSON schema files in `schemas/` directory:
-  - `performance_analysis.schema.json`
-  - `keyword_audit.schema.json`
-  - `ad_copy_audit.schema.json`
-  - `recommendations.schema.json`
-
-### Remaining (Testing & Refinement)
-1. [x] Create all phase prompt files (phases 0-7) ✅
-2. [x] Create `.claude-plugin/plugin.json` manifest ✅
-3. [x] Create main command file `commands/google-ads-audit.md` ✅
-4. [x] Automated test suite (55 tests passing) ✅
-5. [ ] Create additional decision tree files (optional - core logic in phase files)
-6. [ ] Test with real Google Ads account data
-7. [ ] Iterate based on real audit results
-
----
-
-## Installation (Future)
+### From Marketplace
 
 ```bash
 /plugin install mb-google-ads-audit@mb-plugins
 ```
 
-## Usage (Future)
+### Local Development
 
 ```bash
+claude --plugin-dir /path/to/mb-google-ads-audit
+```
+
+### Prerequisites
+
+1. **Google Ads API credentials** in `~/.mondaybrew/.env`:
+   ```env
+   GOOGLE_ADS_DEVELOPER_TOKEN=xxx
+   GOOGLE_ADS_CLIENT_ID=xxx
+   GOOGLE_ADS_CLIENT_SECRET=xxx
+   GOOGLE_ADS_REFRESH_TOKEN=xxx
+   GOOGLE_ADS_LOGIN_CUSTOMER_ID=xxx
+   ```
+
+2. **Python 3.9+** with dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+---
+
+## Quick Start
+
+### Option 1: By Account Name
+```
 /google-ads-audit
+> "Audit the NMD Law account"
+```
+The plugin will list accessible accounts, match by name, and confirm before proceeding.
+
+### Option 2: By Customer ID
+```
+/google-ads-audit
+> "Customer ID: 123-456-7890, Website: https://example.com"
+```
+
+### List Available Accounts
+```bash
+python3 scripts/list_accounts.py
+python3 scripts/list_accounts.py --search "NMD"
+python3 scripts/list_accounts.py --format json
 ```
 
 ---
 
-## Plugin Structure (per Claude Code Docs)
+## How It Works
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     AUDIT WORKFLOW                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. USER INVOKES                                                │
+│     /google-ads-audit                                           │
+│           │                                                     │
+│           ▼                                                     │
+│  2. DATA FETCHING                                               │
+│     scripts/audit_account.py --customer-id [ID]                 │
+│     → output/audit_[ID]_[DATE].json                             │
+│           │                                                     │
+│           ▼                                                     │
+│  3. PHASE 0: DISCOVERY (GATE)                                   │
+│     - Scrape website                                            │
+│     - 11 discovery questions                                    │
+│     → audits/{client}/discovery_brief.md                        │
+│           │                                                     │
+│           ▼                                                     │
+│  4. PHASES 1-5: ANALYSIS                                        │
+│     Each phase analyzes the JSON data                           │
+│     → tracking_audit.md, structure_analysis.md, etc.            │
+│           │                                                     │
+│           ▼                                                     │
+│  5. PHASE 6: SYNTHESIS                                          │
+│     - Aggregate findings                                        │
+│     - Apply severity scores                                     │
+│     - Quantify DKK impact                                       │
+│     → recommendations.json                                      │
+│           │                                                     │
+│           ▼                                                     │
+│  6. PHASE 7: PRESENTATION                                       │
+│     - Generate client-ready HTML report                         │
+│     → audit_presentation.html                                   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## The 8-Phase Workflow
+
+### Phase 0: Discovery (GATE)
+**File:** `skills/google-ads-audit/phases/phase-0-discovery.md`
+**Output:** `discovery_brief.md`
+
+The mandatory starting point. Cannot proceed without completing discovery.
+
+- **Website Analysis**: Understand business, services, conversion paths
+- **11 Discovery Questions**: Establish context for interpretation
+- **Derive Targets**: Extract target CPA/ROAS from account or interview
+
+**Why it matters:** Context shapes interpretation. A "high CPA" is only bad if it exceeds the client's targets.
+
+### Phase 1: Conversion & Tracking
+**File:** `skills/google-ads-audit/phases/phase-1-tracking.md`
+**Output:** `tracking_audit.md`
+
+Validates data trustworthiness before analyzing performance.
+
+- Conversion actions review
+- Attribution model assessment (data-driven preferred)
+- Time lag analysis
+- Enhanced conversions check
+- Trust level determination
+
+**Key question:** "Is the data even trustworthy?"
+
+### Phase 2: Account Structure
+**File:** `skills/google-ads-audit/phases/phase-2-structure.md`
+**Output:** `structure_analysis.md`
+
+Reviews how the account is organized.
+
+- Campaign hierarchy and naming conventions
+- Ad group organization (SKAG vs thematic)
+- Network settings (Search vs Display mixing)
+- Geographic targeting review
+
+### Phase 3: Campaign Performance
+**File:** `skills/google-ads-audit/phases/phase-3-performance.md`
+**Output:** `performance_analysis.json`
+
+Analyzes campaign-level metrics and competition.
+
+- Performance across 30/90/180 day windows
+- Budget utilization (limited by budget?)
+- Bid strategy effectiveness vs targets
+- Campaign tiering (Stars/Workhorses/Question Marks/Dogs)
+- Auction Insights competitor analysis
+
+### Phase 4: Keywords & Search Terms (TENTPOLE)
+**File:** `skills/google-ads-audit/phases/phase-4-keywords.md`
+**Output:** `keyword_audit.json`
+
+One of the three tentpoles - where wasted spend lives.
+
+- Quality Score distribution (spend-weighted)
+- Search terms wasted spend analysis
+- Negative keyword gap identification
+- N-gram analysis for patterns
+- Converting term identification
+
+### Phase 5: Ad Copy & Assets
+**File:** `skills/google-ads-audit/phases/phase-5-ads.md`
+**Output:** `ad_copy_audit.json`
+
+Reviews creative quality and coverage.
+
+- RSA strength distribution
+- Headline/description coverage (need 10+/3+ for flexibility)
+- Asset performance (sitelinks, callouts, snippets)
+- Landing page alignment
+- Quick win identification
+
+### Phase 6: Synthesis
+**File:** `skills/google-ads-audit/phases/phase-6-synthesis.md`
+**Output:** `recommendations.json`
+
+Aggregates all findings into actionable recommendations.
+
+- Validate findings against `$WORKING_WELL` (exclude intentional items)
+- Apply severity scoring (Critical/High/Medium/Low)
+- Quantify DKK impact for all findings
+- Create prioritized action plan (P0/P1/P2)
+- Extract quick wins
+
+### Phase 7: Presentation
+**File:** `skills/google-ads-audit/phases/phase-7-presentation.md`
+**Output:** `audit_presentation.html`
+
+Generates the client-ready deliverable.
+
+- Executive summary with critical finding headline
+- Key metrics snapshot
+- Findings organized by severity
+- Priority action plan
+- Quick wins checklist
+- Technical appendices
+
+---
+
+## Plugin Architecture
+
+### Severity Scoring System
+
+| Level | Criteria | Example |
+|-------|----------|---------|
+| **CRITICAL** | Blocking optimization, ≥50% budget waste | No conversion tracking |
+| **HIGH** | Significant impact, 20-50% waste | Poor QS keywords consuming 20%+ budget |
+| **MEDIUM** | Improvement opportunity | Missing ad extensions |
+| **LOW** | Best practice, nice to have | Ad copy could be stronger |
+
+### Finding Categories (17 Canonical)
+
+**Tracking (Phase 1):**
+- `TRACKING_CONVERSION` - Conversion action issues
+- `TRACKING_ATTRIBUTION` - Attribution model issues
+- `TRACKING_ENHANCED` - Enhanced conversions
+- `TRACKING_DATA_QUALITY` - Data reliability
+
+**Structure (Phase 2):**
+- `STRUCTURE_CAMPAIGN` - Campaign organization
+- `STRUCTURE_AD_GROUP` - Ad group organization
+- `STRUCTURE_NETWORK` - Network settings
+- `STRUCTURE_TARGETING` - Geographic/demographic targeting
+
+**Performance (Phase 3):**
+- `PERFORMANCE_BUDGET` - Budget utilization
+- `PERFORMANCE_BIDDING` - Bid strategy issues
+- `PERFORMANCE_COMPETITION` - Competitive position
+
+**Keywords (Phase 4):**
+- `KEYWORD_QUALITY_SCORE` - QS issues
+- `KEYWORD_WASTED_SPEND` - Search term waste
+- `KEYWORD_NEGATIVE` - Missing negatives
+- `KEYWORD_MATCH_TYPE` - Match type issues
+
+**Ads (Phase 5):**
+- `ADS_RSA` - RSA strength/coverage
+- `ADS_ASSETS` - Extension utilization
+- `ADS_LANDING_PAGE` - Landing page issues
+
+### Variable Storage Pattern
+
+Cross-phase data is stored as variables (e.g., `$TARGET_CPA`, `$BRAND_STRATEGY`) that subsequent phases reference for context-aware analysis.
+
+### Phase Gating
+
+Hooks enforce sequential execution:
+- `validate-phase-gate.py` - Blocks writing Phase N output without Phase N-1 complete
+- `validate-completion.py` - Ensures all phases complete before finishing
+
+---
+
+## File Structure
 
 ```
 mb-google-ads-audit/
 ├── .claude-plugin/
-│   └── plugin.json              # Plugin manifest
+│   └── plugin.json              # Plugin manifest (required)
+│
 ├── commands/
-│   └── google-ads-audit.md      # Main /google-ads-audit command
-├── agents/                       # Subagent definitions (if needed)
+│   └── google-ads-audit.md      # Entry point: /google-ads-audit
+│
 ├── skills/
 │   └── google-ads-audit/
-│       ├── SKILL.md             # ✅ Created - Main skill definition
-│       ├── phases/
-│       │   ├── phase-0-discovery.md     # ✅ Created - Discovery gate
-│       │   ├── phase-1-tracking.md      # ✅ Created - Conversion tracking
-│       │   ├── phase-2-structure.md     # ✅ Created - Account structure
-│       │   ├── phase-3-performance.md   # ✅ Created - Performance analysis
-│       │   ├── phase-4-keywords.md      # ✅ Created - Keywords & search terms
-│       │   ├── phase-5-ads.md           # ✅ Created - Ad copy & assets
-│       │   ├── phase-6-synthesis.md     # ✅ Created - Findings synthesis
-│       │   └── phase-7-presentation.md  # ✅ Created - Final deliverable
+│       ├── SKILL.md             # Main skill definition
+│       ├── phases/              # 8 phase prompt files
+│       │   ├── phase-0-discovery.md
+│       │   ├── phase-1-tracking.md
+│       │   ├── phase-2-structure.md
+│       │   ├── phase-3-performance.md
+│       │   ├── phase-4-keywords.md
+│       │   ├── phase-5-ads.md
+│       │   ├── phase-6-synthesis.md
+│       │   └── phase-7-presentation.md
 │       ├── decision-trees/
-│       │   └── severity-scoring.md      # ✅ Created - Finding severity logic
-│       ├── templates/
-│       │   ├── discovery_brief.md       # ✅ Created - Phase 0 output template
-│       │   └── audit_presentation.html  # ✅ Created - Client-facing HTML report
-│       └── examples/                    # Golden audit examples (TODO)
+│       │   └── severity-scoring.md
+│       └── templates/
+│           ├── discovery_brief.md
+│           └── audit_presentation.html
+│
 ├── hooks/
-│   ├── hooks.json               # ✅ Created - Phase gate validation
-│   ├── validate-phase-gate.py   # ✅ Created - PreToolUse hook
-│   └── validate-completion.py   # ✅ Created - Stop hook
-├── research/
-│   ├── PPC_SPECIALIST_AUDIT_FRAMEWORK.md  # ✅ Complete
-│   ├── AUDIT_CHECKLIST.md                 # ✅ Strengthened with variables
-│   └── PLUGIN_ARCHITECTURE.md             # ✅ Strengthened with patterns
-├── scripts/                      # Utility scripts (TODO)
-├── schemas/                      # ✅ Created - JSON schemas for outputs
+│   ├── hooks.json               # Hook configuration
+│   ├── validate-phase-gate.py   # PreToolUse: enforce phase order
+│   └── validate-completion.py   # Stop: ensure completion
+│
+├── schemas/
 │   ├── performance_analysis.schema.json
 │   ├── keyword_audit.schema.json
 │   ├── ad_copy_audit.schema.json
 │   └── recommendations.schema.json
-├── CLAUDE.md                    # Plugin context for Claude
-└── README.md                    # This file
+│
+├── backend/
+│   └── services/
+│       ├── ads_connector.py     # Google Ads API wrapper (114KB)
+│       ├── credentials.py       # Credential loading
+│       └── ga4_service.py       # GA4 integration (optional)
+│
+├── scripts/
+│   ├── audit_account.py         # Fetch all audit data
+│   ├── list_accounts.py         # List accessible accounts
+│   └── test_plugin.py           # Automated test suite
+│
+├── research/
+│   ├── PPC_SPECIALIST_AUDIT_FRAMEWORK.md
+│   ├── AUDIT_CHECKLIST.md
+│   └── PLUGIN_ARCHITECTURE.md
+│
+├── CLAUDE.md                    # Context for Claude
+├── README.md                    # This file
+└── requirements.txt             # Python dependencies
 ```
 
-### Component Purposes
+### Key Files Explained
 
-| Directory | Purpose |
-|-----------|---------|
-| `commands/` | Entry point - the `/google-ads-audit` slash command |
-| `skills/` | Workflow logic, decision trees, templates |
-| `hooks/` | Phase gate validation (ensure discovery before analysis) |
-| `scripts/` | Data extraction, presentation generation |
-| `schemas/` | Enforce consistent output formats |
+| File | Purpose |
+|------|---------|
+| `.claude-plugin/plugin.json` | Tells Claude Code this is a plugin. Defines name, commands, hooks. |
+| `commands/google-ads-audit.md` | The slash command entry point. Loaded when user runs `/google-ads-audit`. |
+| `skills/*/SKILL.md` | Detailed workflow instructions. Auto-discovered by Claude Code. |
+| `hooks/hooks.json` | Event handlers that run before/after tool calls. |
+| `backend/services/ads_connector.py` | 1700+ line Google Ads API wrapper with 25+ methods. |
+| `scripts/audit_account.py` | Fetches all audit data into a single JSON file. |
 
 ---
 
-## Related
+## How Claude Code Plugins Work
 
-- [mb-keyword-analysis](https://github.com/kaancat/mb-keyword-analysis) - Keyword research plugin
-- [Google Ads - Monday Brew](../Projects/Google%20Ads%20-%20mondaybrew) - Backend services and knowledge base
-- [mb-marketplace](https://github.com/kaancat/mb-marketplace) - Plugin registry
+### Plugin Discovery
+
+Claude Code discovers plugins via:
+1. **Marketplace**: Remote repositories registered in a marketplace manifest
+2. **Local**: `--plugin-dir` flag for development
+
+### The Manifest (plugin.json)
+
+Located at `.claude-plugin/plugin.json`:
+
+```json
+{
+  "name": "mb-google-ads-audit",
+  "version": "1.0.0",
+  "description": "...",
+  "author": { "name": "Monday Brew" },
+  "commands": "./commands",
+  "hooks": "./hooks/hooks.json"
+}
+```
+
+Key rules:
+- All paths must use `./` prefix (relative to plugin root)
+- Name must be kebab-case
+- Version must be semver (MAJOR.MINOR.PATCH)
+
+### Commands
+
+Files in `commands/` become slash commands. `google-ads-audit.md` → `/google-ads-audit`.
+
+Command files use frontmatter for configuration:
+```markdown
+---
+description: Comprehensive Google Ads account audit
+allowed-tools: Bash(*), Read, Write, Edit, WebFetch
+---
+
+# Instructions for Claude...
+```
+
+### Skills
+
+Skills in `skills/*/SKILL.md` are auto-discovered. They provide detailed instructions that Claude follows when the skill is invoked.
+
+### Hooks
+
+Hooks intercept events:
+- `PreToolUse`: Before a tool runs (can block/modify)
+- `PostToolUse`: After a tool runs
+- `Stop`: When Claude wants to end the conversation
+
+Example from this plugin - blocking Phase 2 write if Phase 1 not complete:
+```json
+{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Write|Edit",
+      "hooks": [{
+        "type": "command",
+        "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/validate-phase-gate.py"
+      }]
+    }]
+  }
+}
+```
+
+### Marketplace Distribution
+
+Plugins are distributed via marketplace repositories. The marketplace manifest at `.claude-plugin/marketplace.json`:
+
+```json
+{
+  "name": "mb-plugins",
+  "plugins": [
+    {
+      "name": "mb-google-ads-audit",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/kaancat/mb-google-ads-audit.git"
+      },
+      "version": "1.0.0"
+    }
+  ]
+}
+```
+
+Users install with: `/plugin install mb-google-ads-audit@mb-plugins`
+
+---
+
+## Audit Methodology (from RAG)
+
+This plugin's methodology comes from the Monday Brew Google Ads knowledge base (RAG), specifically **Section 15: The Google Ads Audit Playbook**.
+
+### The Three Types of Audits
+
+| Type | Focus | Examples |
+|------|-------|----------|
+| **Quick Wins** | Egregious errors, immediate fixes | No conversion tracking, only 2/15 RSA headlines |
+| **Strategic** | Business goals alignment | Campaign structure matches goals, scaling potential |
+| **Optimization** | Day-to-day blueprint | Negative keywords, budget adjustments |
+
+**Best audits combine all three.**
+
+### The Three Tentpoles
+
+1. **Business Understanding** - Website analysis, discovery interview
+2. **Conversion Tracking** - Is data trustworthy?
+3. **Search Term Report** - Where is spend being wasted?
+
+### The 12-Step Process (from Course)
+
+1. Website first (1 hour minimum)
+2. Competitors & Google searches
+3. Conversion tracking check
+4. Search term report analysis
+5. Ads review (RSA quality, extensions)
+6. Sitelinks, callouts, structured snippets
+7. Bid strategies (targets vs actuals)
+8. Quality Score analysis
+9. Budget analysis (limited by budget?)
+10. Landing page URL verification
+11. N-gram analysis
+12. Best practice checklist
+
+### Quick Wins Checklist
+
+- [ ] Conversion tracking accuracy
+- [ ] Attribution settings (last-click = problem)
+- [ ] Enhanced conversions enabled?
+- [ ] Campaign consolidation (too fragmented?)
+- [ ] Negative keywords (added recently?)
+- [ ] RSA headlines (need 10-15, not 2)
+- [ ] RSA descriptions (need 3-4)
+- [ ] Landing page URLs correct?
+- [ ] Assets with $300+ clicks, <3 conversions
+
+### Core Principles
+
+1. **Discovery before diagnosis** - Context shapes interpretation
+2. **Quantify everything** - Every finding needs estimated DKK impact
+3. **Don't "fix" intentional strategies** - Ask first about brand campaigns, geo targeting
+4. **Lead with impact** - Executive summary first, details in appendices
+
+---
+
+## Configuration
+
+### Environment Variables
+
+Set in `~/.mondaybrew/.env`:
+
+| Variable | Description |
+|----------|-------------|
+| `GOOGLE_ADS_DEVELOPER_TOKEN` | Your Google Ads API developer token |
+| `GOOGLE_ADS_CLIENT_ID` | OAuth client ID |
+| `GOOGLE_ADS_CLIENT_SECRET` | OAuth client secret |
+| `GOOGLE_ADS_REFRESH_TOKEN` | OAuth refresh token |
+| `GOOGLE_ADS_LOGIN_CUSTOMER_ID` | MCC account ID (for accessing client accounts) |
+
+### MCP RAG Tools
+
+The plugin uses the `google-ads-rag` MCP server for methodology guidance:
+
+```python
+query_knowledge("audit checklist")      # Search audit methodology
+get_methodology("audit")                # Get audit-specific guidance
+get_example("nmd_law")                  # Case study retrieval
+get_deliverable_schema("keyword_audit") # Output format specs
+```
+
+---
+
+## Development
+
+### Running Tests
+
+```bash
+python3 scripts/test_plugin.py
+```
+
+**Current status:** 56 tests passing, 0 failures
+
+### Testing Locally
+
+```bash
+claude --plugin-dir /Users/you/path/to/mb-google-ads-audit
+```
+
+Then run `/google-ads-audit` to test the workflow.
+
+### Manual Data Fetch
+
+```bash
+# Fetch audit data for an account
+python3 scripts/audit_account.py --customer-id 1234567890
+
+# Output: output/audit_1234567890_20260112.json
+```
+
+### Adding a New Phase
+
+1. Create `skills/google-ads-audit/phases/phase-X-name.md`
+2. Follow the template: Purpose, Prerequisites, Steps, Checkpoint, Output
+3. Update `commands/google-ads-audit.md` to reference it
+4. Add to `hooks/validate-phase-gate.py` if needed
+5. Run tests
+
+---
+
+## Related Projects
+
+| Project | Description |
+|---------|-------------|
+| [mb-keyword-analysis](https://github.com/kaancat/mb-keyword-analysis) | Keyword research plugin (creates new campaigns) |
+| [mb-marketplace](https://github.com/kaancat/mb-marketplace) | Plugin registry for Monday Brew plugins |
+
+---
+
+## License
+
+MIT
+
+---
+
+**Built by [Monday Brew](https://mondaybrew.dk)** - Google Ads workflow automation for Claude Code.
