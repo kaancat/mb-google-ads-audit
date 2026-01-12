@@ -1,6 +1,6 @@
 {
   "name": "mb-google-ads-audit",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Comprehensive Google Ads account audit system - diagnostic analysis, severity scoring, and prioritized action plans",
   "author": {
     "name": "Monday Brew",
