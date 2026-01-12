@@ -126,9 +126,23 @@ Use these to inform your analysis:
 
 ## Getting Started
 
-Begin by asking for:
-1. Google Ads Customer ID
+### Option A: User knows the Customer ID
+Ask for:
+1. Google Ads Customer ID (e.g., `123-456-7890`)
 2. Website URL
 3. Audit period (default: last 90 days)
 
-Then load and execute `phase-0-discovery.md` to start the discovery process.
+### Option B: User provides account name
+If user provides a name instead of ID:
+
+1. **List accessible accounts:**
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/list_accounts.py
+```
+
+2. **Match by name** - Find the account matching the user's input
+3. **Confirm with user** - Show the matched account and ID before proceeding
+4. **Continue with the ID**
+
+### Then:
+Load and execute `phase-0-discovery.md` to start the discovery process.
