@@ -4,7 +4,7 @@ A comprehensive Google Ads account audit plugin for [Claude Code](https://claude
 
 **Repository:** https://github.com/kaancat/mb-google-ads-audit
 **Marketplace:** https://github.com/kaancat/mb-marketplace
-**Version:** 1.0.0
+**Version:** 1.0.2
 
 ---
 

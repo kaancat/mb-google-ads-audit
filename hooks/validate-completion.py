@@ -19,27 +19,53 @@ import re
 from pathlib import Path
 
 
+def is_audit_directory(path: Path) -> bool:
+    """Check if directory contains audit artifacts (not just any random directory)."""
+    # Audit-specific files that indicate an actual audit is in progress
+    audit_markers = [
+        "discovery_brief.md",
+        "tracking_audit.md",
+        "structure_analysis.md",
+        "performance_analysis.json",
+        "keyword_audit.json",
+        "ad_copy_audit.json",
+        "recommendations.json",
+        "audit_presentation.html",
+        "audit_config.json",  # If we add a config file
+        ".audit-in-progress",  # Explicit marker file
+    ]
+    return any((path / marker).exists() for marker in audit_markers)
+
+
 def find_client_dir():
-    """Find the active client directory from environment or recent files."""
-    # Check environment variable first
+    """Find the active client directory from environment or recent files.
+
+    IMPORTANT: Only returns a directory if it contains actual audit artifacts.
+    This prevents the hook from triggering in unrelated projects that happen
+    to have a clients/ or audits/ folder.
+    """
+    # Check environment variable first (explicit override)
     client_dir = os.environ.get("MB_AUDIT_DIR")
     if client_dir and Path(client_dir).exists():
         return Path(client_dir)
 
-    # Check for clients directory
     cwd = Path.cwd()
 
     # Check for audits directory first
     audits_dir = cwd / "audits"
     if audits_dir.exists():
-        audit_dirs = [d for d in audits_dir.iterdir() if d.is_dir()]
+        audit_dirs = [
+            d for d in audits_dir.iterdir() if d.is_dir() and is_audit_directory(d)
+        ]
         if audit_dirs:
             return max(audit_dirs, key=lambda d: d.stat().st_mtime)
 
     # Then check for clients directory
     clients_dir = cwd / "clients"
     if clients_dir.exists():
-        client_dirs = [d for d in clients_dir.iterdir() if d.is_dir()]
+        client_dirs = [
+            d for d in clients_dir.iterdir() if d.is_dir() and is_audit_directory(d)
+        ]
         if client_dirs:
             return max(client_dirs, key=lambda d: d.stat().st_mtime)
 
